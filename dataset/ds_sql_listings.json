@@ -1,0 +1,51 @@
+{
+	"name": "ds_sql_listings",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "ListingID",
+				"type": "varchar"
+			},
+			{
+				"name": "PropertyID",
+				"type": "varchar"
+			},
+			{
+				"name": "AgentID",
+				"type": "varchar"
+			},
+			{
+				"name": "ListDate",
+				"type": "date"
+			},
+			{
+				"name": "Status",
+				"type": "varchar"
+			},
+			{
+				"name": "AskingPrice",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "Currency",
+				"type": "varchar"
+			},
+			{
+				"name": "EndDate",
+				"type": "date"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "stg_Listings"
+		}
+	}
+}

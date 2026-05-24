@@ -1,0 +1,42 @@
+{
+	"name": "ds_fact_viewings",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "ViewingFactKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "PropertyKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "AgentKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "DateKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ViewingDuration",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "FactViewings"
+		}
+	}
+}

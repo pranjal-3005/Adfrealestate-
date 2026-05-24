@@ -1,0 +1,84 @@
+{
+	"name": "df_load_dim_agent",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sql_agents",
+						"type": "DatasetReference"
+					},
+					"name": "souceagent",
+					"description": "source agent "
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_dim_agent",
+						"type": "DatasetReference"
+					},
+					"name": "sink1",
+					"rejectedDataLinkedService": {
+						"referenceName": "LS_ADLS",
+						"type": "LinkedServiceReference"
+					}
+				}
+			],
+			"transformations": [
+				{
+					"name": "filteragent",
+					"description": "Add exprestsion for the filter"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "aggregate1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          AgentID as string,",
+				"          AgentName as string,",
+				"          Region as string,",
+				"          City as string,",
+				"          JoinDate as date,",
+				"          ExperienceYears as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> souceagent",
+				"souceagent filter(!isNull(AgentID)) ~> filteragent",
+				"filteragent derive(AgentName = upper(trim(AgentName)),",
+				"          City = upper(trim(City)),",
+				"          Region = upper(trim(Region))) ~> derivedColumn1",
+				"derivedColumn1 aggregate(groupBy(AgentID),",
+				"     AgentName = first(AgentName),",
+				"          City = first(City),",
+				"          Region = first(Region)) ~> aggregate1",
+				"aggregate1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          AgentKey as integer,",
+				"          AgentID as string,",
+				"          AgentName as string,",
+				"          Region as string,",
+				"          City as string,",
+				"          JoinDate as date,",
+				"          ExperienceYears as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}

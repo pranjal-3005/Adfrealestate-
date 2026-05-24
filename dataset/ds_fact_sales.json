@@ -1,0 +1,43 @@
+{
+	"name": "ds_fact_sales",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "SalesKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "AgentKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "PropertyKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "DateKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SalePrice",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "FactSales"
+		}
+	}
+}
