@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "dfrealeastate"
+		},
+		"LS_ADLS_accountKey": {
+			"value": ""
+		},
+		"LS_SQL_password": {
+			"value": ""
+		},
+		"LS_ADLS_properties_typeProperties_url": {
+			"value": "https://strealestateproject.dfs.core.windows.net/"
+		},
+		"LS_SQL_properties_typeProperties_server": {
+			"value": "sqlrealestateser.database.windows.net"
+		},
+		"LS_SQL_properties_typeProperties_database": {
+			"value": "dbrealestate"
+		},
+		"LS_SQL_properties_typeProperties_userName": {
+			"value": "sqladmine"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
