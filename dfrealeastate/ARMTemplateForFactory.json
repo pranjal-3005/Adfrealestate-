@@ -83,6 +83,133 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/PL_Load_Dimproperties')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "LKP_CheckPropertyCount",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.00:10:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "SELECT COUNT(*) AS TotalRows\nFROM stg_Properties",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "ds_sql_properties",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						}
+					},
+					{
+						"name": "IF_PropertiesExist",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "LKP_CheckPropertyCount",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greater(activity('LKP_CheckPropertyCount').output.firstRow.TotalRows,0)",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "IF_PropertiesExist",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:10:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_load_dim_properties",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "SP_Validate_DimProperty",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Data flow1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:10:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "dwh.sp_Validate_DimProperty"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_SQL",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_sql_properties')]",
+				"[concat(variables('factoryId'), '/dataflows/df_load_dim_properties')]",
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_copy_agent')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1174,6 +1301,65 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_clean_properties')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "PropertyID",
+						"type": "varchar"
+					},
+					{
+						"name": "PropertyType",
+						"type": "varchar"
+					},
+					{
+						"name": "City",
+						"type": "varchar"
+					},
+					{
+						"name": "Region",
+						"type": "varchar"
+					},
+					{
+						"name": "Bedrooms",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Bathrooms",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "AreaSqft",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "YearBuilt",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "vw_Clean_Properties"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_dim_agent')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -2094,6 +2280,102 @@
 				"[concat(variables('factoryId'), '/datasets/ds_sql_agents')]",
 				"[concat(variables('factoryId'), '/datasets/ds_dim_agent')]",
 				"[concat(variables('factoryId'), '/linkedServices/LS_ADLS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_load_dim_properties')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_clean_properties",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_dim_property",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "aggregate1"
+						},
+						{
+							"name": "derivedColumn1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          PropertyID as string,",
+						"          PropertyType as string,",
+						"          City as string,",
+						"          Region as string,",
+						"          Bedrooms as integer,",
+						"          Bathrooms as integer,",
+						"          AreaSqft as decimal(10,2),",
+						"          YearBuilt as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> source1",
+						"derivedColumn1 aggregate(groupBy(PropertyID),",
+						"     PropertyType = first(PropertyType),",
+						"          City = first(City),",
+						"          Region = first(Region),",
+						"          Bedrooms = max(Bedrooms),",
+						"          Bathrooms = max(Bathrooms),",
+						"          AreaSqft = max(AreaSqft)) ~> aggregate1",
+						"source1 derive(Bedrooms = toInteger(Bedrooms),",
+						"          Bathrooms = toInteger(Bathrooms),",
+						"          AreaSqft = toDecimal(AreaSqft,10,2)) ~> derivedColumn1",
+						"aggregate1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          PropertyKey as integer,",
+						"          PropertyID as string,",
+						"          Region as string,",
+						"          City as string,",
+						"          PropertyType as string,",
+						"          Bedrooms as integer,",
+						"          Bathrooms as integer,",
+						"          AreaSqft as integer,",
+						"          YearBuilt as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          PropertyID,",
+						"          Region,",
+						"          City,",
+						"          PropertyType,",
+						"          Bedrooms,",
+						"          Bathrooms,",
+						"          AreaSqft",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_clean_properties')]",
+				"[concat(variables('factoryId'), '/datasets/ds_dim_property')]"
 			]
 		}
 	]
