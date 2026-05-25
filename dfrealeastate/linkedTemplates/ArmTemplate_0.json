@@ -518,6 +518,32 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_clean_date')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "ClosingDate",
+						"type": "date"
+					}
+				],
+				"typeProperties": {
+					"schema": "staging",
+					"table": "vw_Clean_Dates"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_clean_properties')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -788,6 +814,65 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_dimdate')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "DateKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "FullDate",
+						"type": "date"
+					},
+					{
+						"name": "DayNumber",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "MonthNumber",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "MonthName",
+						"type": "varchar"
+					},
+					{
+						"name": "QuarterNumber",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "YearNumber",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "WeekdayName",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dwh",
+					"table": "DimDate"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_fact_leads')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -923,100 +1008,6 @@
 				"typeProperties": {
 					"schema": "dbo",
 					"table": "FactSales"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_SQL')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_fact_viewings')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LS_SQL",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "ViewingFactKey",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "PropertyKey",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "AgentKey",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "DateKey",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "ViewingDuration",
-						"type": "int",
-						"precision": 10
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "FactViewings"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_SQL')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_sql_agents')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LS_SQL",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "AgentID",
-						"type": "varchar"
-					},
-					{
-						"name": "AgentName",
-						"type": "varchar"
-					},
-					{
-						"name": "Region",
-						"type": "varchar"
-					},
-					{
-						"name": "City",
-						"type": "varchar"
-					},
-					{
-						"name": "JoinDate",
-						"type": "date"
-					},
-					{
-						"name": "ExperienceYears",
-						"type": "int",
-						"precision": 10
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "stg_Agents"
 				}
 			},
 			"dependsOn": [
