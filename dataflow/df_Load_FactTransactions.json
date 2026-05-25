@@ -1,0 +1,135 @@
+{
+	"name": "df_Load_FactTransactions",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sql_transctions",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_dim_agent",
+						"type": "DatasetReference"
+					},
+					"name": "Agent"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_dim_property",
+						"type": "DatasetReference"
+					},
+					"name": "propty"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_fact_tranctions",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "join2"
+				},
+				{
+					"name": "join3"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          TransactionID as string,",
+				"          ListingID as string,",
+				"          AgentID as string,",
+				"          PropertyID as string,",
+				"          OfferDate as date,",
+				"          ClosingDate as date,",
+				"          SalePrice as decimal(18,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source1",
+				"source(output(",
+				"          AgentKey as integer,",
+				"          AgentID as string,",
+				"          AgentName as string,",
+				"          Region as string,",
+				"          City as string,",
+				"          JoinDate as date,",
+				"          ExperienceYears as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> Agent",
+				"source(output(",
+				"          PropertyKey as integer,",
+				"          PropertyID as string,",
+				"          Region as string,",
+				"          City as string,",
+				"          PropertyType as string,",
+				"          Bedrooms as integer,",
+				"          Bathrooms as integer,",
+				"          AreaSqft as integer,",
+				"          YearBuilt as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> propty",
+				"source1 derive(datekey = toInteger(toString(ClosingDate,'yyyyMMdd'))) ~> derivedColumn1",
+				"Agent, derivedColumn1 join(Agent Agentr@AgentID == source1@AgentID,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"propty, source1 join(propty@PropertyID == source1@PropertyID,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join2",
+				"source1 join(DateKey == ERROR_FUNCTION(''),",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join3",
+				"join2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          TransactionKey as integer,",
+				"          AgentKey as integer,",
+				"          PropertyKey as integer,",
+				"          DateKey as integer,",
+				"          SalePrice as decimal(18,2),",
+				"          DaysToClose as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          PropertyKey,",
+				"          SalePrice",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}
