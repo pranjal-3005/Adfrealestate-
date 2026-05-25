@@ -16,7 +16,7 @@
 						"referenceName": "ds_dim_agent",
 						"type": "DatasetReference"
 					},
-					"name": "Agent"
+					"name": "Agentdim"
 				},
 				{
 					"dataset": {
@@ -26,27 +26,13 @@
 					"name": "propty"
 				}
 			],
-			"sinks": [
-				{
-					"dataset": {
-						"referenceName": "ds_fact_tranctions",
-						"type": "DatasetReference"
-					},
-					"name": "sink1"
-				}
-			],
+			"sinks": [],
 			"transformations": [
 				{
 					"name": "derivedColumn1"
 				},
 				{
-					"name": "join1"
-				},
-				{
-					"name": "join2"
-				},
-				{
-					"name": "join3"
+					"name": "Agent"
 				}
 			],
 			"scriptLines": [
@@ -75,7 +61,7 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     format: 'table') ~> Agent",
+				"     format: 'table') ~> Agentdim",
 				"source(output(",
 				"          PropertyKey as integer,",
 				"          PropertyID as string,",
@@ -92,43 +78,10 @@
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> propty",
 				"source1 derive(datekey = toInteger(toString(ClosingDate,'yyyyMMdd'))) ~> derivedColumn1",
-				"Agent, derivedColumn1 join(Agent Agentr@AgentID == source1@AgentID,",
-				"     joinType:'inner',",
+				"Agentdim, derivedColumn1 join(joinType:'undefined',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
-				"     broadcast: 'auto')~> join1",
-				"propty, source1 join(propty@PropertyID == source1@PropertyID,",
-				"     joinType:'inner',",
-				"     matchType:'exact',",
-				"     ignoreSpaces: false,",
-				"     broadcast: 'auto')~> join2",
-				"source1 join(DateKey == ERROR_FUNCTION(''),",
-				"     joinType:'inner',",
-				"     matchType:'exact',",
-				"     ignoreSpaces: false,",
-				"     broadcast: 'auto')~> join3",
-				"join2 sink(allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     input(",
-				"          TransactionKey as integer,",
-				"          AgentKey as integer,",
-				"          PropertyKey as integer,",
-				"          DateKey as integer,",
-				"          SalePrice as decimal(18,2),",
-				"          DaysToClose as integer",
-				"     ),",
-				"     deletable:false,",
-				"     insertable:true,",
-				"     updateable:false,",
-				"     upsertable:false,",
-				"     format: 'table',",
-				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError',",
-				"     mapColumn(",
-				"          PropertyKey,",
-				"          SalePrice",
-				"     )) ~> sink1"
+				"     broadcast: 'auto')~> Agent"
 			]
 		}
 	}
