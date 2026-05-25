@@ -1,0 +1,90 @@
+{
+	"name": "df_load_dim_properties",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_clean_properties",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_dim_property",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "aggregate1"
+				},
+				{
+					"name": "derivedColumn1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          PropertyID as string,",
+				"          PropertyType as string,",
+				"          City as string,",
+				"          Region as string,",
+				"          Bedrooms as integer,",
+				"          Bathrooms as integer,",
+				"          AreaSqft as decimal(10,2),",
+				"          YearBuilt as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source1",
+				"derivedColumn1 aggregate(groupBy(PropertyID),",
+				"     PropertyType = first(PropertyType),",
+				"          City = first(City),",
+				"          Region = first(Region),",
+				"          Bedrooms = max(Bedrooms),",
+				"          Bathrooms = max(Bathrooms),",
+				"          AreaSqft = max(AreaSqft)) ~> aggregate1",
+				"source1 derive(Bedrooms = toInteger(Bedrooms),",
+				"          Bathrooms = toInteger(Bathrooms),",
+				"          AreaSqft = toDecimal(AreaSqft,10,2)) ~> derivedColumn1",
+				"aggregate1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          PropertyKey as integer,",
+				"          PropertyID as string,",
+				"          Region as string,",
+				"          City as string,",
+				"          PropertyType as string,",
+				"          Bedrooms as integer,",
+				"          Bathrooms as integer,",
+				"          AreaSqft as integer,",
+				"          YearBuilt as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          PropertyID,",
+				"          Region,",
+				"          City,",
+				"          PropertyType,",
+				"          Bedrooms,",
+				"          Bathrooms,",
+				"          AreaSqft",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}

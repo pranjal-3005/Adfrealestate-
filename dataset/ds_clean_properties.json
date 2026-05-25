@@ -1,0 +1,54 @@
+{
+	"name": "ds_clean_properties",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "PropertyID",
+				"type": "varchar"
+			},
+			{
+				"name": "PropertyType",
+				"type": "varchar"
+			},
+			{
+				"name": "City",
+				"type": "varchar"
+			},
+			{
+				"name": "Region",
+				"type": "varchar"
+			},
+			{
+				"name": "Bedrooms",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Bathrooms",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "AreaSqft",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "YearBuilt",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "vw_Clean_Properties"
+		}
+	}
+}
