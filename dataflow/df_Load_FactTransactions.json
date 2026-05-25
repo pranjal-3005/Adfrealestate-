@@ -26,13 +26,24 @@
 					"name": "propty"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_fact_tranctions",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "derivedColumn1"
 				},
 				{
 					"name": "Agent"
+				},
+				{
+					"name": "join1"
 				}
 			],
 			"scriptLines": [
@@ -81,7 +92,30 @@
 				"Agentdim, derivedColumn1 join(joinType:'undefined',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
-				"     broadcast: 'auto')~> Agent"
+				"     broadcast: 'auto')~> Agent",
+				"propty, source1 join(propty@PropertyID == source1@PropertyID,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          TransactionKey as integer,",
+				"          AgentKey as integer,",
+				"          PropertyKey as integer,",
+				"          DateKey as integer,",
+				"          SalePrice as decimal(18,2),",
+				"          DaysToClose as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
 			]
 		}
 	}
