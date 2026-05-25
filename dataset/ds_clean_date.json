@@ -1,0 +1,21 @@
+{
+	"name": "ds_clean_date",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "ClosingDate",
+				"type": "date"
+			}
+		],
+		"typeProperties": {
+			"schema": "staging",
+			"table": "vw_Clean_Dates"
+		}
+	}
+}

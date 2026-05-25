@@ -1,0 +1,74 @@
+{
+	"name": "df_Load_dim_Date",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_clean_date",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_dim_date",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "aggregate1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          ClosingDate as date",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source1",
+				"source1 derive(DateKey = toInteger(toString(ClosingDate,'yyyyMMdd')),",
+				"          FullDate = ClosingDate,",
+				"          DayNumber = dayOfMonth(ClosingDate),",
+				"          MonthNumbe = month(ClosingDate)) ~> derivedColumn1",
+				"derivedColumn1 aggregate(groupBy(DateKey),",
+				"     FullDate = first(FullDate),",
+				"          DayNumber = max(DayNumber),",
+				"          MonthNumbe = max(MonthNumbe)) ~> aggregate1",
+				"aggregate1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          DateKey as integer,",
+				"          FullDate as date,",
+				"          Year as integer,",
+				"          Quarter as integer,",
+				"          Month as integer,",
+				"          MonthName as string,",
+				"          Day as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          DateKey,",
+				"          FullDate",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}

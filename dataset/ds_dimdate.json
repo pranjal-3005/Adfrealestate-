@@ -1,0 +1,54 @@
+{
+	"name": "ds_dimdate",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "DateKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "FullDate",
+				"type": "date"
+			},
+			{
+				"name": "DayNumber",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "MonthNumber",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "MonthName",
+				"type": "varchar"
+			},
+			{
+				"name": "QuarterNumber",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "YearNumber",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "WeekdayName",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dwh",
+			"table": "DimDate"
+		}
+	}
+}
