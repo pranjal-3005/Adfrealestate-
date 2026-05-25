@@ -988,6 +988,162 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_load_fact_transctions')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "LKP_CheckTransactions",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.00:10:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "SELECT COUNT(*) AS TotalRows\nFROM stg_Transactions",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "ds_sql_transctions",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						}
+					},
+					{
+						"name": "If Condition1",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "LKP_CheckTransactions",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greater(activity('LKP_CheckTransactions').output.firstRow.TotalRows,0)",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "SP_Delete_FactTransactions",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "If Condition1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:10:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dwh].[sp_Delete_FactTransactions]"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_SQL",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "SP_Delete_FactTransactions",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_Load_FactTransactions",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"Agentdim": {},
+									"propty": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Stored procedure1",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Data flow1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dwh].[sp_Validate_FactTransactions]"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_SQL",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_sql_transctions')]",
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL')]",
+				"[concat(variables('factoryId'), '/dataflows/df_Load_FactTransactions')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_adls_agent')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -1925,6 +2081,59 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_fact_tranctions')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "TransactionKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "AgentKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "PropertyKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "DateKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "SalePrice",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 2
+					},
+					{
+						"name": "DaysToClose",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "dwh",
+					"table": "FactTransactions"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_fact_viewings')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -2402,6 +2611,136 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_Load_FactTransactions')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_transctions",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_dim_agent",
+								"type": "DatasetReference"
+							},
+							"name": "Agentdim"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_dim_property",
+								"type": "DatasetReference"
+							},
+							"name": "propty"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_fact_tranctions",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "Agent"
+						},
+						{
+							"name": "join1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          TransactionID as string,",
+						"          ListingID as string,",
+						"          AgentID as string,",
+						"          PropertyID as string,",
+						"          OfferDate as date,",
+						"          ClosingDate as date,",
+						"          SalePrice as decimal(18,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> source1",
+						"source(output(",
+						"          AgentKey as integer,",
+						"          AgentID as string,",
+						"          AgentName as string,",
+						"          Region as string,",
+						"          City as string,",
+						"          JoinDate as date,",
+						"          ExperienceYears as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> Agentdim",
+						"source(output(",
+						"          PropertyKey as integer,",
+						"          PropertyID as string,",
+						"          Region as string,",
+						"          City as string,",
+						"          PropertyType as string,",
+						"          Bedrooms as integer,",
+						"          Bathrooms as integer,",
+						"          AreaSqft as integer,",
+						"          YearBuilt as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> propty",
+						"source1 derive(datekey = toInteger(toString(ClosingDate,'yyyyMMdd'))) ~> derivedColumn1",
+						"Agentdim, derivedColumn1 join(joinType:'undefined',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> Agent",
+						"propty, source1 join(propty@PropertyID == source1@PropertyID,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          TransactionKey as integer,",
+						"          AgentKey as integer,",
+						"          PropertyKey as integer,",
+						"          DateKey as integer,",
+						"          SalePrice as decimal(18,2),",
+						"          DaysToClose as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_sql_transctions')]",
+				"[concat(variables('factoryId'), '/datasets/ds_dim_agent')]",
+				"[concat(variables('factoryId'), '/datasets/ds_dim_property')]",
+				"[concat(variables('factoryId'), '/datasets/ds_fact_tranctions')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/df_Load_dim_Date')]",

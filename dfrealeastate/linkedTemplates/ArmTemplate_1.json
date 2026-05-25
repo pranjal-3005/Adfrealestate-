@@ -13,6 +13,57 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_fact_tranctions')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "TransactionKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "AgentKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "PropertyKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "DateKey",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "SalePrice",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 2
+					},
+					{
+						"name": "DaysToClose",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "dwh",
+					"table": "FactTransactions"
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_fact_viewings')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -1076,6 +1127,134 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/df_Load_FactTransactions')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_transctions",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_dim_agent",
+								"type": "DatasetReference"
+							},
+							"name": "Agentdim"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_dim_property",
+								"type": "DatasetReference"
+							},
+							"name": "propty"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_fact_tranctions",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "Agent"
+						},
+						{
+							"name": "join1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          TransactionID as string,",
+						"          ListingID as string,",
+						"          AgentID as string,",
+						"          PropertyID as string,",
+						"          OfferDate as date,",
+						"          ClosingDate as date,",
+						"          SalePrice as decimal(18,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> source1",
+						"source(output(",
+						"          AgentKey as integer,",
+						"          AgentID as string,",
+						"          AgentName as string,",
+						"          Region as string,",
+						"          City as string,",
+						"          JoinDate as date,",
+						"          ExperienceYears as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> Agentdim",
+						"source(output(",
+						"          PropertyKey as integer,",
+						"          PropertyID as string,",
+						"          Region as string,",
+						"          City as string,",
+						"          PropertyType as string,",
+						"          Bedrooms as integer,",
+						"          Bathrooms as integer,",
+						"          AreaSqft as integer,",
+						"          YearBuilt as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> propty",
+						"source1 derive(datekey = toInteger(toString(ClosingDate,'yyyyMMdd'))) ~> derivedColumn1",
+						"Agentdim, derivedColumn1 join(joinType:'undefined',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> Agent",
+						"propty, source1 join(propty@PropertyID == source1@PropertyID,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          TransactionKey as integer,",
+						"          AgentKey as integer,",
+						"          PropertyKey as integer,",
+						"          DateKey as integer,",
+						"          SalePrice as decimal(18,2),",
+						"          DaysToClose as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_sql_transctions')]",
+				"[concat(variables('factoryId'), '/datasets/ds_fact_tranctions')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/df_Load_dim_Date')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -1146,188 +1325,6 @@
 						"     mapColumn(",
 						"          DateKey,",
 						"          FullDate",
-						"     )) ~> sink1"
-					]
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/df_load_dim_agent')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "ds_sql_agents",
-								"type": "DatasetReference"
-							},
-							"name": "souceagent",
-							"description": "source agent "
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "ds_dim_agent",
-								"type": "DatasetReference"
-							},
-							"name": "sink1",
-							"rejectedDataLinkedService": {
-								"referenceName": "LS_ADLS",
-								"type": "LinkedServiceReference"
-							}
-						}
-					],
-					"transformations": [
-						{
-							"name": "filteragent",
-							"description": "Add exprestsion for the filter"
-						},
-						{
-							"name": "derivedColumn1"
-						},
-						{
-							"name": "aggregate1"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          AgentID as string,",
-						"          AgentName as string,",
-						"          Region as string,",
-						"          City as string,",
-						"          JoinDate as date,",
-						"          ExperienceYears as integer",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     isolationLevel: 'READ_UNCOMMITTED',",
-						"     format: 'table') ~> souceagent",
-						"souceagent filter(!isNull(AgentID)) ~> filteragent",
-						"filteragent derive(AgentName = upper(trim(AgentName)),",
-						"          City = upper(trim(City)),",
-						"          Region = upper(trim(Region))) ~> derivedColumn1",
-						"derivedColumn1 aggregate(groupBy(AgentID),",
-						"     AgentName = first(AgentName),",
-						"          City = first(City),",
-						"          Region = first(Region)) ~> aggregate1",
-						"aggregate1 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          AgentKey as integer,",
-						"          AgentID as string,",
-						"          AgentName as string,",
-						"          Region as string,",
-						"          City as string,",
-						"          JoinDate as date,",
-						"          ExperienceYears as integer",
-						"     ),",
-						"     deletable:false,",
-						"     insertable:true,",
-						"     updateable:false,",
-						"     upsertable:false,",
-						"     format: 'table',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_sql_agents')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/df_load_dim_properties')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "ds_clean_properties",
-								"type": "DatasetReference"
-							},
-							"name": "source1"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "ds_dim_property",
-								"type": "DatasetReference"
-							},
-							"name": "sink1"
-						}
-					],
-					"transformations": [
-						{
-							"name": "aggregate1"
-						},
-						{
-							"name": "derivedColumn1"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          PropertyID as string,",
-						"          PropertyType as string,",
-						"          City as string,",
-						"          Region as string,",
-						"          Bedrooms as integer,",
-						"          Bathrooms as integer,",
-						"          AreaSqft as decimal(10,2),",
-						"          YearBuilt as integer",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     isolationLevel: 'READ_UNCOMMITTED',",
-						"     format: 'table') ~> source1",
-						"derivedColumn1 aggregate(groupBy(PropertyID),",
-						"     PropertyType = first(PropertyType),",
-						"          City = first(City),",
-						"          Region = first(Region),",
-						"          Bedrooms = max(Bedrooms),",
-						"          Bathrooms = max(Bathrooms),",
-						"          AreaSqft = max(AreaSqft)) ~> aggregate1",
-						"source1 derive(Bedrooms = toInteger(Bedrooms),",
-						"          Bathrooms = toInteger(Bathrooms),",
-						"          AreaSqft = toDecimal(AreaSqft,10,2)) ~> derivedColumn1",
-						"aggregate1 sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     input(",
-						"          PropertyKey as integer,",
-						"          PropertyID as string,",
-						"          Region as string,",
-						"          City as string,",
-						"          PropertyType as string,",
-						"          Bedrooms as integer,",
-						"          Bathrooms as integer,",
-						"          AreaSqft as integer,",
-						"          YearBuilt as integer",
-						"     ),",
-						"     deletable:false,",
-						"     insertable:true,",
-						"     updateable:false,",
-						"     upsertable:false,",
-						"     format: 'table',",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     errorHandlingOption: 'stopOnFirstError',",
-						"     mapColumn(",
-						"          PropertyID,",
-						"          Region,",
-						"          City,",
-						"          PropertyType,",
-						"          Bedrooms,",
-						"          Bathrooms,",
-						"          AreaSqft",
 						"     )) ~> sink1"
 					]
 				}
